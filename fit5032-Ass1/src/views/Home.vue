@@ -1,6 +1,6 @@
 <template>
-  <div class="container" style="padding:24px">
-    <h1>Home</h1>
-    <p>Vue Router is working 🎉</p>
+  <div class="container py-4">
+    <h1 class="h3">Home</h1>
+    <p>Public Health through Nutrition Education</p>
   </div>
 </template>
