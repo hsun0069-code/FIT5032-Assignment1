@@ -29,8 +29,8 @@ export const useAuthStore = defineStore('auth', {
     logout() { this.user = null; localStorage.removeItem(SESSION_KEY) },
     seedAdmin() {
       const users = loadUsers()
-      if (!users.find((u) => u.email === 'admin@nfp.org')) {
-        users.push({ name: 'Admin', email: 'admin@nfp.org', pass: sha256('Admin123!'), role: 'admin' })
+      if (!users.find((u) => u.email === 'admin@staff.monash')) {
+        users.push({ name: 'Admin', email: 'admin@staff.monash', pass: sha256('Admin123!'), role: 'admin' })
         saveUsers(users)
       }
     },
