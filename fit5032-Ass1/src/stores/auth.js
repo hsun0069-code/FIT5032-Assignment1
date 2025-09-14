@@ -27,7 +27,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem(SESSION_KEY, JSON.stringify(this.user))
     },
     logout() { this.user = null; localStorage.removeItem(SESSION_KEY) },
-    seedAdmin() {
+    seedAdmin() {// If you need a custom administrator email address/password, change it here
       const users = loadUsers()
       if (!users.find((u) => u.email === 'admin@staff.monash')) {
         users.push({ name: 'Admin', email: 'admin@staff.monash', pass: sha256('Admin123!'), role: 'admin' })

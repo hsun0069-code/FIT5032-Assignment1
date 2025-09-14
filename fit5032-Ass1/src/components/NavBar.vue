@@ -5,13 +5,11 @@
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
         <span class="navbar-toggler-icon"></span>
       </button>
-
       <div id="nav" class="collapse navbar-collapse">
         <ul class="navbar-nav me-auto">
           <li class="nav-item"><RouterLink class="nav-link" to="/">Home</RouterLink></li>
           <li class="nav-item"><RouterLink class="nav-link" to="/admin">Admin</RouterLink></li>
         </ul>
-
         <div class="d-flex gap-2 align-items-center">
           <span v-if="auth.isAuthenticated">Hi, {{ auth.user.name }} ({{ auth.user.role }})</span>
           <RouterLink v-if="!auth.isAuthenticated" class="btn btn-outline-primary btn-sm" to="/login">Login</RouterLink>
