@@ -35,7 +35,6 @@ const onSubmit = () => {
   errors.email = !/^\S+@\S+\.\S+$/.test(email.value) ? 'Please enter a valid email.' : ''
   errors.password = password.value.length < 6 ? 'Minimum 6 characters.' : ''
   if (errors.email || errors.password) return
-
   try {
     auth.login({ email: email.value, password: password.value })
     router.push({ name: 'Home' })

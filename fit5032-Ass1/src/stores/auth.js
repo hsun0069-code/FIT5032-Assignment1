@@ -33,6 +33,6 @@ export const useAuthStore = defineStore('auth', {
         users.push({ name: 'Admin', email: 'admin@staff.monash', pass: sha256('Admin123!'), role: 'admin' })
         saveUsers(users)
       }
-    },
-  },
+    }
+  }
 })

@@ -10,6 +10,7 @@ const routes = [
   { path: '/login', name: 'Login', component: Login, meta: { guestOnly: true } },
   { path: '/register', name: 'Register', component: Register, meta: { guestOnly: true } },
   { path: '/resources', name: 'Resources', component: Resources },
+  { path: '/resources/:id', name: 'ResourceDetail', component: ResourceDetail },
   { path: '/admin', name: 'Admin', component: Admin, meta: { requiresAuth: true, requiresRole: 'admin' } },
 ]
 
