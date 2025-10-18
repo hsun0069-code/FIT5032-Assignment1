@@ -6,6 +6,7 @@ import Register from '@/views/Register.vue'
 import Resources from '@/views/Resources.vue'
 import ResourceDetail from '@/views/ResourceDetail.vue'
 import Admin from '@/views/Admin.vue'
+import MapView from '@/views/Map.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const routes = [
@@ -30,6 +31,13 @@ const routes = [
     name: 'Admin',
     component: Admin,
     meta: { requiresAuth: true, requiresAdmin: true },
+  },
+
+  //Map
+  { path: '/map', 
+    name: 'Map', 
+    component: MapView, 
+    meta: { requiresAuth: true } 
   },
 
   // 404

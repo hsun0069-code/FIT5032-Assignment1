@@ -1,6 +1,9 @@
 <template>
   <div class="container py-4">
-    <h1 class="h3">Resources</h1>
+    <div class="d-flex justify-content-between align-items-center">
+      <h1 class="h3">Resources</h1>
+      <ExportButtons />
+    </div>
 
     
     <div class="row g-3">
@@ -54,6 +57,7 @@
 import { computed, onMounted, nextTick } from 'vue'
 import { useResourcesStore } from '@/stores/resources'
 import RatingStars from '@/components/RatingStars.vue'
+import ExportButtons from '@/components/ExportButtons.vue'
 
 const res = useResourcesStore()
 
@@ -66,7 +70,7 @@ const rows = computed(() =>
   }))
 )
 
-// 列搜索（jQuery 版）
+// Column Search (jQuery Version)
 function enablePerColumnSearch($table, dt) {
   $table.find('tfoot th').each(function () {
     const title = this.textContent.trim()

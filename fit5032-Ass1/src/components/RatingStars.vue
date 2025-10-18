@@ -1,11 +1,61 @@
 <template>
-  <div class="d-inline-flex align-items-center">
-    <button v-for="n in 5" :key="n" class="btn btn-sm"
-            :class="n <= value ? 'btn-warning' : 'btn-outline-secondary'"
-            @click="$emit('rate', n)" aria-label="Rate {{n}} stars">★</button>
-    <span class="ms-2">Avg: {{ avg?.toFixed(1) ?? '0.0' }}</span>
+  <div class="rating-stars d-inline-flex" role="radiogroup" aria-label="Rate this resource">
+    <span
+      v-for="n in 5"
+      :key="n"
+      role="radio"
+      tabindex="0"
+      :aria-checked="n === current"
+      aria-label="Rate {{ n }} of 5"
+      class="star"
+      :class="{ active: n <= current }"
+      @click="rate(n)"
+      @keydown.enter.prevent="rate(n)"
+      @keydown.space.prevent="rate(n)"
+      @keydown.left.prevent="moveLeft"
+      @keydown.right.prevent="moveRight"
+    >
+      ★
+    </span>
   </div>
 </template>
+
 <script setup>
-defineProps({ value: { type:Number, default:0 }, avg:{ type:Number, default:0 } })
+import { ref } from 'vue'
+
+// Current rating status
+const current = ref(0)
+
+// Score when user clicks or confirms with keyboard
+const rate = (n) => {
+  current.value = n
+  console.log('Rated', n)
+}
+
+// Left and right keys can move the cursor
+const moveLeft = () => {
+  if (current.value > 1) current.value--
+}
+const moveRight = () => {
+  if (current.value < 5) current.value++
+}
 </script>
+
+<style scoped>
+.star {
+  font-size: 1.5rem;
+  color: #ccc;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition: color 0.2s;
+}
+.star.active {
+  color: #f39c12;
+}
+.star:focus {
+  outline: 2px solid #333;
+  border-radius: 4px;
+}
+</style>
+

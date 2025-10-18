@@ -1,6 +1,9 @@
 <template>
   <div class="container py-4">
-    <h1 class="h3">Admin</h1>
+    <div class="d-flex justify-content-between align-items-center">
+      <h1 class="h3">Admin</h1>
+      <ExportButtons />
+    </div>
 
     <form class="row g-2" @submit.prevent="add">
       <div class="col-12 col-md-4">
@@ -106,6 +109,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useResourcesStore } from '@/stores/resources'
 import EmailTester from '@/components/EmailTester.vue'
+import ExportButtons from '@/components/ExportButtons.vue'
 
 const res = useResourcesStore()
 const title = ref(''), summary = ref('')
