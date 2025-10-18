@@ -5,16 +5,16 @@ import router from './router'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap'
 
-import { useAuthStore } from '@/stores/auth' 
-
 const app = createApp(App)
 const pinia = createPinia()
-
 app.use(pinia).use(router)
+
+import { useAuthStore } from '@/stores/auth' 
 
 // Ensure that an administrator account exists at startup (change it in stores/auth.js if you need a custom email address)
 const auth = useAuthStore()
-auth.seedAdmin()
+auth.watchFirebaseAuth()// Listen for Firebase sessions
+auth.seedAdmin()// Local administrator seed (can be called when the Admin page is first visited)
 
 app.mount('#app')
 
