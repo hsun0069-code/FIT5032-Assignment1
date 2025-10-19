@@ -124,8 +124,8 @@
     <div class="d-flex align-items-center justify-content-between">
       <h2 class="h5 mb-3">Users – Interactive Table (Bulk Email)</h2>
       <div class="d-flex gap-2">
-        <button class="btn btn-outline-secondary btn-sm" @click="selectAll">Select all</button>
-        <button class="btn btn-outline-secondary btn-sm" @click="clearAll">Clear</button>
+        <button class="btn btn-outline-secondary btn-sm" @click="selectAll" type="button">Select all</button>
+        <button class="btn btn-outline-secondary btn-sm" @click="clearAll" type="button">Clear</button>
       </div>
     </div>
 
@@ -143,7 +143,7 @@
         <input type="file" class="form-control" @change="onFile" />
       </div>
       <div class="col-12 d-flex gap-2">
-        <button class="btn btn-primary" @click="sendBulk" :disabled="sending">
+        <button class="btn btn-primary" @click="sendBulk" type="button" :disabled="sending">
           {{ sending ? 'Sending...' : `Send to ${selectedEmails.length} users` }}
         </button>
         <button class="btn btn-outline-primary" @click="aiFill" type="button">AI Suggest Subject & Body</button>
@@ -204,13 +204,15 @@
       These are your exposed REST routes that reviewers can access directly for verification:
     </p>
     <ul class="list-unstyled small">
-      <li>
-        <code>{{ owmUrl }}</code>
-        <button class="btn btn-sm btn-outline-secondary ms-2" @click="testOwm">Test</button>
+      <li class="d-flex align-items-center flex-wrap gap-2">
+        <code class="me-2">{{ owmUrl }}</code>
+        <button class="btn btn-sm btn-outline-secondary" @click="testOwm" type="button">Test</button>
+        <button class="btn btn-sm btn-outline-secondary" @click="copy(owmUrl)" type="button" aria-label="Copy OWM URL">Copy</button>
       </li>
-      <li class="mt-1">
-        <code>{{ aiUrl }}</code>
-        <button class="btn btn-sm btn-outline-secondary ms-2" @click="testAi">Test</button>
+      <li class="d-flex align-items-center flex-wrap gap-2 mt-1">
+        <code class="me-2">{{ aiUrl }}</code>
+        <button class="btn btn-sm btn-outline-secondary" @click="testAi" type="button">Test</button>
+        <button class="btn btn-sm btn-outline-secondary" @click="copy(aiUrl)" type="button" aria-label="Copy AI URL">Copy</button>
       </li>
     </ul>
 
@@ -235,23 +237,22 @@ const users = ref([
   { name: 'Bob',    email: 'bob@example.com',    role: 'member', provider: 'local',    registered: '2025-03-09' },
 ])
 
-/* -- New: Dashboard Statistics -- */
-const adminCount = computed(() => users.value.filter(u => u.role === 'admin').length)
-const memberCount = computed(() => users.value.filter(u => u.role !== 'admin').length)
+/* -- Dashboard Statistics -- */
+const adminCount   = computed(() => users.value.filter(u => u.role === 'admin').length)
+const memberCount  = computed(() => users.value.filter(u => u.role !== 'admin').length)
 
 const roleChart = ref(null)
 const ratingChart = ref(null)
 
-/* -- New resources -- */
+/* -- Add resource -- */
 const add = () => {
   if (!title.value || !summary.value) return
   res.addResource({ title: title.value, summary: summary.value, tags: [] })
   title.value = summary.value = ''
-  //Refresh the chart after data is updated
   drawCharts()
 }
 
-/* -- DataTables  -- */
+/* -- Data for table rows -- */
 const resTableRows = computed(() =>
   res.items.map((r) => ({
     id: r.id,
@@ -261,7 +262,7 @@ const resTableRows = computed(() =>
   }))
 )
 
-/* -- DataTable Initialization -- */
+/* -- DataTable helpers -- */
 function enablePerColumnSearch($table, dt) {
   $table.find('tfoot th').each(function () {
     const title = this.textContent.trim()
@@ -279,10 +280,10 @@ function enablePerColumnSearch($table, dt) {
 
 /* -- Bulk Email -- */
 const selectedEmails = ref([])
-const bulk = ref({ subject: '', text: '' })
-const sending = ref(false)
-const msg = ref('')
-const attach = ref(null)           // { filename, base64, mime }
+const bulk     = ref({ subject: '', text: '' })
+const sending  = ref(false)
+const msg      = ref('')
+const attach   = ref(null) // { filename, base64, mime }
 
 function onFile(e) {
   const file = e.target.files?.[0]
@@ -302,9 +303,9 @@ function clearAll(){ selectedEmails.value = [] }
 const functionsBase = import.meta.env.VITE_FUNCTIONS_BASE || 'https://us-central1-fit5032-ass1.cloudfunctions.net'
 const sendUrl = `${functionsBase}/sendEmailWithAttachment`
 const owmUrl = ref(`${functionsBase}/owmForecast?city=Melbourne`)
-const aiUrl  = ref(`${functionsBase}/aiSuggest?prompt=Write%20a%20short%20welcome%20email%20subject`)
+const aiUrl  = ref(`${functionsBase}/aiSuggest?prompt=${encodeURIComponent('Write a short welcome email subject')}`)
 
-/* Mass Send */
+/* Bulk send */
 async function sendBulk() {
   if (!selectedEmails.value.length) { msg.value = 'Please select at least one user.'; return }
   if (!bulk.value.subject || !bulk.value.text) { msg.value = 'Subject and body are required.'; return }
@@ -313,16 +314,13 @@ async function sendBulk() {
     const payloadBase = {
       subject: bulk.value.subject,
       text: bulk.value.text,
+      ...(attach.value || {})
     }
-    if (attach.value) Object.assign(payloadBase, attach.value)
-
-    // Send sequentially; can also Promise.all concurrently
     for (const to of selectedEmails.value) {
-      const payload = { to, ...payloadBase }
       const res = await fetch(sendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ to, ...payloadBase })
       })
       if (!res.ok) throw new Error(`Failed to send to ${to}`)
     }
@@ -334,31 +332,71 @@ async function sendBulk() {
   }
 }
 
-/* --AI generates email copy (calling aiSuggest) -- */
+/* ==AI POST == */
 async function aiFill(){
   try {
-    const subjectRes = await fetch(`${functionsBase}/aiSuggest?prompt=${encodeURIComponent('Create a catchy email subject for announcing our new healthy-eating resources, under 10 words.')}`)
-    const subj = await subjectRes.text()
-    const bodyRes = await fetch(`${functionsBase}/aiSuggest?prompt=${encodeURIComponent('Write a short friendly email (80-120 words) inviting users to check our new healthy-eating resources. No markdown.')}`)
-    const body = await bodyRes.text()
-    bulk.value.subject = subj.replace(/^"|"$/g,'')
-    bulk.value.text = body
+    //1) Generate a topic (POST, JSON)
+    const subjectRes = await fetch(`${functionsBase}/aiSuggest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: 'Create a catchy email subject for announcing our new healthy-eating resources, under 10 words.'
+      })
+    })
+    const subjRaw = await subjectRes.text()
+    let subjText = ''
+    try { subjText = (JSON.parse(subjRaw).text || subjRaw) } catch { subjText = subjRaw }
+    subjText = String(subjText).replace(/^"|"$/g,'')
+
+    // 2) Generate body (POST, JSON)
+    const bodyRes = await fetch(`${functionsBase}/aiSuggest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: 'Write a short friendly email (80-120 words) inviting users to check our new healthy-eating resources. No markdown.'
+      })
+    })
+    const bodyRaw = await bodyRes.text()
+    let bodyText = ''
+    try { bodyText = (JSON.parse(bodyRaw).text || bodyRaw) } catch { bodyText = bodyRaw }
+
+    bulk.value.subject = subjText
+    bulk.value.text    = bodyText
     msg.value = 'AI has suggested a subject & body. Review before sending.'
   } catch (e) {
     msg.value = 'AI suggestion failed: ' + e.message
   }
 }
 
-/* -- Public API test button -- */
-async function testOwm(){
-  const r = await fetch(owmUrl.value)
-  const txt = await r.text()
-  alert(txt.slice(0, 250) + (txt.length > 250 ? '...' : ''))
+/* -- Public API Test -- */
+function openInNewTab(url) {
+  const win = window.open(url, '_blank', 'noopener')
+  return !!win
 }
-async function testAi(){
-  const r = await fetch(aiUrl.value)
-  const txt = await r.text()
-  alert(txt)
+async function gracefulFetchAlert(url, label='Response') {
+  try {
+    const r = await fetch(url)
+    const txt = await r.text()
+    alert(`${label}:\n\n` + txt.slice(0, 800) + (txt.length > 800 ? '\n...\n(truncated)' : ''))
+  } catch (e) {
+    alert(`${label} failed: ${e.message}`)
+  }
+}
+function testOwm(){
+  if (!openInNewTab(owmUrl.value)) {
+    gracefulFetchAlert(owmUrl.value, 'OWM Forecast')
+  }
+}
+function testAi(){
+  if (!openInNewTab(aiUrl.value)) {
+    gracefulFetchAlert(aiUrl.value, 'AI Suggest')
+  }
+}
+async function copy(valRef){
+  try {
+    await navigator.clipboard.writeText(valRef.value || valRef)
+    alert('Copied!')
+  } catch(_){}
 }
 
 /* -- Charts -- */
@@ -366,7 +404,6 @@ let roleChartInstance = null
 let ratingChartInstance = null
 
 function drawCharts(){
-  // 1) User role pie chart
   const ctx1 = roleChart.value?.getContext('2d')
   if (ctx1){
     if (roleChartInstance) roleChartInstance.destroy()
@@ -378,7 +415,6 @@ function drawCharts(){
       }
     })
   }
-  // 2) Average distribution bar chart of each resource
   const labels = res.items.map(r => r.title)
   const data   = res.items.map(r => Number(res.avgRating(r.id).toFixed(1)))
   const ctx2 = ratingChart.value?.getContext('2d')
@@ -399,20 +435,18 @@ function drawCharts(){
 onMounted(async () => {
   await nextTick()
 
-  // DataTable: Resources
-  const $resTable = window.$ && window.$('#resTableAdmin')
-  if ($resTable && $resTable.length) {
-    const dt1 = $resTable.DataTable({ pageLength: 10 })
-    enablePerColumnSearch($resTable, dt1)
-  }
-  // DataTable: Users
-  const $usersTable = window.$ && window.$('#usersTable')
-  if ($usersTable && $usersTable.length) {
-    const dt2 = $usersTable.DataTable({ pageLength: 10 })
-    enablePerColumnSearch($usersTable, dt2)
+  if (window.$) {
+    const $ = window.$
+    if ($.fn.DataTable && !$.fn.DataTable.isDataTable('#resTableAdmin')) {
+      const dt1 = $('#resTableAdmin').DataTable({ pageLength: 10 })
+      enablePerColumnSearch($('#resTableAdmin'), dt1)
+    }
+    if ($.fn.DataTable && !$.fn.DataTable.isDataTable('#usersTable')) {
+      const dt2 = $('#usersTable').DataTable({ pageLength: 10 })
+      enablePerColumnSearch($('#usersTable'), dt2)
+    }
   }
 
-  // Initial drawing of the chart
   drawCharts()
 })
 </script>
